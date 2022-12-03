@@ -21,6 +21,7 @@ public:
 
 	void fill(uint32_t color);
 	void fill(uint32_t color, uint8_t side);
+  void setPixel(uint8_t color, uint8_t row, uint8_t col, uint8_t side);
   void clear();
   void clear(uint8_t side);
 	void show();
