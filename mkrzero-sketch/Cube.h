@@ -5,12 +5,12 @@
 #include <stdint.h>
 #include <Adafruit_NeoPixel.h>
 
-#define PIN1        6
-#define PIN2        7
-#define PIN3        8
-#define PIN4        9
-#define PIN5        10
-#define PIN6        11
+#define PIN1        0
+#define PIN2        1
+#define PIN3        2
+#define PIN4        3
+#define PIN5        4
+#define PIN6        5
 
 #define NUMPIXELS 5
 
@@ -21,10 +21,13 @@ public:
 
 	void fill(uint32_t color);
 	void fill(uint32_t color, uint8_t side);
-  void setPixel(uint8_t color, uint8_t row, uint8_t col, uint8_t side);
+  void setPixel(uint32_t color, uint8_t row, uint8_t col, uint8_t side);
+  void setGridPixel();
+  void setGridSide(int copy[NUMPIXELS][NUMPIXELS], uint8_t side);
   void clear();
   void clear(uint8_t side);
 	void show();
+  void update();
   uint32_t color(uint8_t r, uint8_t g, uint8_t b);
  
 private:

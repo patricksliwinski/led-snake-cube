@@ -2,59 +2,117 @@
 #include "Cube.h"
 #include "GY521.h"
 
+GY521 gyro(0x68);
 
+int diceSides[6][NUMPIXELS][NUMPIXELS] = {{{0,0,0,0,0},
+                                           {0,0,0,0,0},
+                                           {0,0,1,0,0},
+                                           {0,0,0,0,0},
+                                           {0,0,0,0,0}},
+                                       
+                                          {{0,0,0,0,0},
+                                           {0,0,0,1,0},
+                                           {0,0,0,0,0},
+                                           {0,1,0,0,0},
+                                           {0,0,0,0,0}},
 
+                                          {{0,0,0,0,0},
+                                           {0,0,0,1,0},
+                                           {0,0,1,0,0},
+                                           {0,1,0,0,0},
+                                           {0,0,0,0,0}},
 
-
-/*
- *       [4]
- * [0][1][2][3]
- *       [5]
- * 
- *    [4]
- * [3][0][1] 
- *    [5]
- * 
- *    [4]
- * [0][1][2]
- *    [5]
- * 
- *    [4]
- * [1][2][3]
- *    [5]
- * 
- *    [4]
- * [2][3][0]
- *    [5]
- *    
- *    [1]
- * [0][4][2]   
- *    [3]
- * 
- *    [1]
- * [0][5][2]
- *    [3]
- */   
-
+                                          {{0,0,0,0,0},
+                                           {0,1,0,1,0},
+                                           {0,0,0,0,0},
+                                           {0,1,0,1,0},
+                                           {0,0,0,0,0}},
+                                     
+                                          {{0,0,0,0,0},
+                                           {0,1,0,1,0},
+                                           {0,0,1,0,0},
+                                           {0,1,0,1,0},
+                                           {0,0,0,0,0}},
+                                     
+                                          {{0,1,0,1,0},
+                                           {0,0,0,0,0},
+                                           {0,1,0,1,0},
+                                           {0,0,0,0,0},
+                                           {0,1,0,1,0}}};                                 
 Cube cube;
-uint8_t currentSide = 0;
-
-enum directions {RIGHT, LEFT, UP, DOWN};
-enum directions direction = DOWN;
-int headRow = 0;
-int headCol = 0;
 
 void setup() {
   Serial.begin(115200);
 
-//  test_fill_sides();
-  cube.show();
+  Wire.begin();
+  delay(100);
+  while (gyro.wakeup() == false) {delay(1000);}
+  gyro.setAccelSensitivity(2);  // 8g
+  gyro.setGyroSensitivity(1);   // 500 degrees/s
+  gyro.setThrottle();
 }
 
 void loop() {
-  test_rotations();
-  delay(100);
+  if (cube_shaken()) {
+    roll();
+  }
+  cube.clear();
   cube.show();
+}
+
+void roll() {
+
+  int permutation[] = {0,1,2,3,4,5};
+  for (int flip = 0; flip < 40; flip++) {
+    
+    for (size_t i = 0; i < 6; i++)
+    {
+        size_t j = random(0, 5 - i);
+        int t = permutation[i];
+        permutation[i] = permutation[j];
+        permutation[j] = t;
+    }
+
+    for (uint8_t i = 0; i < 6; i++)
+    {
+       cube.setGridSide(diceSides[permutation[i]], i);
+    }
+
+    cube.update();
+    cube.show();
+
+    delay(50 + flip * 7);
+    
+  }
+  delay(4000);
+}
+
+bool cube_shaken() {
+  gyro.read();
+  float angleX = gyro.getAngleX();
+  float angleY = gyro.getAngleY();
+  float angleZ = gyro.getAngleZ();
+  float accelX = gyro.getAccelX();
+  float accelY = gyro.getAccelY();
+  float accelZ = gyro.getAccelZ();
+//  Serial.print("AngleX: ");
+//  Serial.println(angleX);
+//  Serial.print("AngleY: ");
+//  Serial.println(angleY);
+//  Serial.print("AngleZ: ");
+//  Serial.println(angleZ);
+//  Serial.print("AccelX: ");
+//  Serial.println(accelX);
+//  Serial.print("AccelY: ");
+//  Serial.println(accelY);
+//  Serial.print("AccelZ: ");
+//  Serial.println(accelZ);
+
+  Serial.println(sqrt(sq(accelX) + sq(accelY) + sq(accelZ)));
+
+  delay(10);
+  
+  return sqrt(sq(accelX) + sq(accelY) + sq(accelZ)) > 1.6;
 }
 
 void test_fill() {
@@ -70,199 +128,4 @@ void test_fill_sides() {
   
   cube.fill(cube.color(0, 0, 50), 4);
   cube.fill(cube.color(0, 0, 50), 5);
-}
-
-void test_rotations() {
-  cube.clear();
-//  cube.fill(cube.color(50, 0, 0), currentSide);
-
-  switch (currentSide) {
-    case 0:
-      switch (direction) {
-        case RIGHT:
-          if (++headCol >= NUMPIXELS) {
-            currentSide = 1;
-            headCol = 0; 
-          }
-        break;
-        case LEFT:
-          if (--headCol < 0) {
-            currentSide = 3;
-            headCol = NUMPIXELS - 1;
-          }
-        break;
-        case UP:
-          if (--headRow < 0) {
-            currentSide = 4;
-            direction = RIGHT;
-            headRow = headCol;
-            headCol = 0;
-          }
-        break;
-        case DOWN:
-          if (++headRow >= NUMPIXELS) {
-            currentSide = 5;
-            direction = RIGHT;
-            headRow = headCol;
-            headCol = 0;
-          }
-        break;
-      }
-    break;
-    case 1:
-      switch (direction) {
-        case RIGHT:
-          if (++headCol >= NUMPIXELS) {
-            currentSide = 2;
-            headCol = 0; 
-          }
-        break;
-        case LEFT:
-          if (--headCol < 0) {
-            currentSide = 0;
-            headCol = NUMPIXELS - 1;
-          }
-        break;
-        case UP:
-          if (--headRow < 0) {
-            currentSide = 4;
-            direction = DOWN;
-            headRow = 0;
-          }
-        break;
-        case DOWN:
-        if (++headRow >= NUMPIXELS) {
-          currentSide = 5;
-          direction = DOWN;
-          headRow = 0;
-        }
-        break;
-      }
-    break;
-    case 2:
-      switch (direction) {
-        case RIGHT:
-          if (++headCol >= NUMPIXELS) {
-            currentSide = 3;
-            headCol = 0; 
-          }
-        break;
-        case LEFT:
-          if (--headCol < 0) {
-            currentSide = 1;
-            headCol = NUMPIXELS - 1;
-          }
-        break;
-        case UP:
-          if (--headRow < 0) {
-            currentSide = 4;
-            direction = LEFT;
-            headRow = headCol;
-            headCol = NUMPIXELS-1;
-          }
-        break;
-        case DOWN:
-          if (++headRow >= NUMPIXELS) {
-            currentSide = 5;
-            direction = LEFT;
-            headRow = headCol;
-            headCol = NUMPIXELS-1;
-          }
-        break;
-      }
-    break;
-    case 3:
-      switch (direction) {
-        case RIGHT:
-          if (++headCol >= NUMPIXELS) {
-            currentSide = 0;
-            headCol = 0; 
-          }
-        break;
-        case LEFT:
-          if (--headCol < 0) {
-            currentSide = 2;
-            headCol = NUMPIXELS - 1;
-          }
-        break;
-        case UP:
-          if (--headRow < 0) {
-            currentSide = 4;
-            direction = UP;
-            headRow = NUMPIXELS-1;
-          }
-        break;
-        case DOWN:
-          if (++headRow >= NUMPIXELS) {
-            currentSide = 5;
-            direction = UP;
-            headRow = NUMPIXELS-1;
-          }
-        break;
-      }
-    break;
-    case 4:
-      switch (direction) {
-        case RIGHT:
-          if (++headCol >= NUMPIXELS) {
-            currentSide = 2;
-            headCol = headRow;
-            headRow = 0;
-          }
-        break;
-        case LEFT:
-          if (--headCol < 0) {
-            currentSide = 0;
-            headCol = headRow;
-            headRow = 0;
-          }
-        break;
-        case UP:
-          if (--headRow < 0) {
-            currentSide = 1;
-            headRow = 0;
-          }
-        break;
-        case DOWN:
-          if (++headRow >= NUMPIXELS) {
-            currentSide = 3;
-            headRow = 0;
-          }
-        break;
-      }
-      direction = DOWN;
-    break;
-    case 5:
-      switch (direction) {
-        case RIGHT:
-          if (++headCol >= NUMPIXELS) {
-            currentSide = 2;
-            headCol = headRow;
-            headRow = 0;
-          }
-        break;
-        case LEFT:
-          if (--headCol < 0) {
-            currentSide = 0;
-            headCol = headRow;
-            headRow = 0;
-          }
-        break;
-        case UP:
-          if (--headRow < 0) {
-            currentSide = 1;
-            headRow = 0;
-          }
-        break;
-        case DOWN:
-          if (++headRow >= NUMPIXELS) {
-            currentSide = 3;
-            headRow = 0;
-          }
-        break;
-      }
-      direction = UP;
-    break;
-  }
-  cube.setPixel(cube.color(0,0,50), headRow, headCol, currentSide);
 }
