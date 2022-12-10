@@ -37,7 +37,7 @@ uint32_t colorGrid[6][5][5];
 
 // stored which sides are adjacent to a given side
 // in order {right, left, up, down}
-uint8_t adjacencyMatrix[6][4] = {{2, 4, 3, 1},
+uint8_t adjacencyMatrix[6][4] = {{3, 1, 4, 2},
                                  {2, 4, 0, 5},
                                  {3, 1, 0, 5},
                                  {4, 2, 0, 5},
@@ -68,19 +68,22 @@ void setup()
 
 void loop()
 {
+//  readGyro();
+//  delay(100);
+  changeDirection();
+  moveSnake();
+  updateGrid();
+
   cube.clear();
   cube.setCube(colorGrid);
   cube.show();
-
-  moveSnake();
-  changeDirection();
-  updateGrid();
-  delayWithGyroPoll();
+  // delayWithGyroPoll();
+  delay(300);
 
   score += length;
 
   if (millis() - lastSideChange > 30000) {
-    gameOver();
+     gameOver();
   }
   // Serial.println(getTopSide());
   // cube.clear();
@@ -197,7 +200,7 @@ void gameOver()
   cube.clear();
   cube.show();
 
-  currentDirection = DOWN;
+  currentDirection = UP;
   headRow = 2;
   headCol = 2;
   currentSide = 0;
@@ -312,17 +315,31 @@ uint8_t getTopSide()
   float magAngleY = abs(angleY);
   float magAngleZ = abs(angleZ);
 
+  int offset = 40;
+
+  if (topSide == 0 || topSide == 5) {
+    magAngleZ -= offset;
+  }
+
+  if (topSide == 4 || topSide == 2) {
+    magAngleY -= offset;
+  }
+
+  if (topSide == 1 || topSide == 3) {
+    magAngleX -= offset;
+  }
+
   if (magAngleZ >= magAngleX && magAngleZ >= magAngleY)
   {
     return angleZ > 0 ? 5 : 0;
   }
   else if (magAngleY >= magAngleX && magAngleY >= magAngleZ)
   {
-    return angleY > 0 ? 3 : 1;
+    return angleY > 0 ? 4 : 2;
   }
   else if (magAngleX >= magAngleY && magAngleX >= magAngleZ)
   {
-    return angleX > 0 ? 4 : 2;
+    return angleX > 0 ? 1 : 3;
   }
 
   return 0;
@@ -472,4 +489,36 @@ void rotateSide()
   }
 
   currentSide = newSide;
+}
+
+void readGyro() {
+  gyro.read();
+  float angleX = gyro.getAngleX();
+  float angleY = gyro.getAngleY();
+  float angleZ = gyro.getAngleZ();
+  float accelX = gyro.getAccelX();
+  float accelY = gyro.getAccelY();
+  float accelZ = gyro.getAccelZ();
+
+  float magAngleX = abs(angleX);
+  float magAngleY = abs(angleY);
+  float magAngleZ = abs(angleZ);
+
+  magAngleZ -= 55;
+
+  Serial.print(magAngleX);
+  Serial.print(",");
+  Serial.print(magAngleY);
+  Serial.print(",");
+  Serial.print(magAngleZ);
+  Serial.println(",");
+
+//  Serial.print(accelX);
+//  Serial.print(",");
+//  Serial.print(accelY);
+//  Serial.print(",");
+//  Serial.print(accelZ);
+//  Serial.println();
+
+
 }
