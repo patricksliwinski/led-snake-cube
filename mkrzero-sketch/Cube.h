@@ -5,12 +5,12 @@
 #include <stdint.h>
 #include <Adafruit_NeoPixel.h>
 
-#define PIN1        6
-#define PIN2        7
-#define PIN3        8
-#define PIN4        9
-#define PIN5        10
-#define PIN6        11
+#define PIN1        0
+#define PIN2        4
+#define PIN3        2
+#define PIN4        1
+#define PIN5        3
+#define PIN6        5
 
 #define NUMPIXELS 5
 
@@ -21,7 +21,9 @@ public:
 
 	void fill(uint32_t color);
 	void fill(uint32_t color, uint8_t side);
-  void setPixel(uint8_t color, uint8_t row, uint8_t col, uint8_t side);
+  void fill(uint32_t color, uint8_t side, uint8_t num);
+  void setPixel(uint32_t color, uint8_t row, uint8_t col, uint8_t side);
+  void setCube(uint32_t grid[6][NUMPIXELS][NUMPIXELS]);
   void clear();
   void clear(uint8_t side);
 	void show();
@@ -36,10 +38,6 @@ private:
       Adafruit_NeoPixel(NUMPIXELS*NUMPIXELS, PIN5, NEO_GRB + NEO_KHZ800),
       Adafruit_NeoPixel(NUMPIXELS*NUMPIXELS, PIN6, NEO_GRB + NEO_KHZ800),
       };
-
-  int gameGrid[6][NUMPIXELS][NUMPIXELS];
-
-
 };
 
 #endif
